@@ -1,0 +1,23 @@
+<Solution>
+  <Folder Name="/Aspire/">
+    <Project Path="src/ShortUrl.AppHost/ShortUrl.AppHost.csproj" />
+    <Project Path="src/ShortUrl.ServiceDefaults/ShortUrl.ServiceDefaults.csproj" />
+  </Folder>
+  <Folder Name="/Infrastructure/">
+    <Project Path="src/ShortUrl.Common/ShortUrl.Common.csproj" />
+    <Project Path="src/ShortUrl.Core/ShortUrl.Core.csproj" />
+    <Project Path="src/ShortUrl.DbPersistence/ShortUrl.DbPersistence.csproj" />
+    <Project Path="src/ShortUrl.Entities/ShortUrl.Entities.csproj" />
+    <Project Path="src/ShortUrl.Infrastructure/ShortUrl.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/Presentation/">
+    <Project Path="src/ShortUrl.DevSupport/ShortUrl.DevSupport.csproj" />
+    <Project Path="src/ShortUrl.WebApp/ShortUrl.WebApp.csproj" />
+  </Folder>
+  <Folder Name="/Test/">
+    <Project Path="test/ShortUrl.Aspire.Test/ShortUrl.Aspire.Test.csproj" Id="c2eadeca-2372-4b36-b0f0-357b44415dcc" />
+  </Folder>
+  <Folder Name="/_SolutionItems/">
+    <File Path="readme.md" />
+  </Folder>
+</Solution>

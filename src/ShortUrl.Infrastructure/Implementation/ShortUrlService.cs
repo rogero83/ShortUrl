@@ -1,0 +1,142 @@
+﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using ShortUrl.Common;
+using ShortUrl.Common.ResultPattern;
+using ShortUrl.Core.Contracts;
+using ShortUrl.Core.Models;
+using ShortUrl.DbPersistence;
+using ShortUrl.Entities;
+using ZiggyCreatures.Caching.Fusion;
+
+namespace ShortUrl.Infrastructure.Implementation
+{
+    public class ShortUrlService(ShortUrlContext dbContext,
+        IFusionCache cache,
+        ILogger<ShortUrlService> logger
+        ) : IShortUrlService
+    {
+        private const int MaxStep = 5;
+
+        public async Task<Result<CreateShortUrlResponse>> CreateShortUrl(ApiKeyContext apiKeyContext, CreateShortUrlRequest request, CancellationToken ct)
+        {
+            //// Validators
+            //if (string.IsNullOrEmpty(request.OriginalUrl)
+            //    || !Uri.IsWellFormedUriString(request.OriginalUrl, UriKind.Absolute))
+            //{
+            //    logger.LogWarning("Invalid URL format provided by ApiKeyId: {ApiKeyId}, URL: {Url}", apiKeyContext.Id, request.OriginalUrl);
+            //    return Error.Validation("The provided long URL is not valid.");
+            //}
+
+            //if (request.Expire.HasValue && request.Expire.Value <= DateTime.UtcNow)
+            //{
+            //    logger.LogWarning("Expiration date is in the past for ApiKeyId: {ApiKeyId}, Expire: {Expire}", apiKeyContext.Id, request.Expire);
+            //    return Error.Validation("The expiration date must be in the future.");
+            //}
+
+            //// Check for custom short code
+            //if (request.ShortCode != null)
+            //{
+            //    if (!apiKeyContext.CanSetCustomShortCodes)
+            //    {
+            //        logger.LogWarning("Custom ShortCode creation not allowed for ApiKeyId: {ApiKey}", apiKeyContext.Id);
+            //        return Error.Validation("Custom short URL codes are not allowed for your API key.");
+            //    }
+
+            //    if (!ShortUrlGenerator.IsValidShortCode(request.ShortCode))
+            //    {
+            //        logger.LogWarning("Invalid ShortCode format provided by ApiKeyId: {ApiKeyId}, ShortCode: {ShortCode}", apiKeyContext.Id, request.ShortCode);
+            //        return Error.Validation("The provided short URL code is not valid.");
+            //    }
+            //}
+
+            var step = 0;
+            do
+            {
+                var shortCode = request.ShortCode ?? ShortUrlGenerator.GenerateShortCode();
+                if (!await dbContext.ShortUrls.AnyAsync(su => su.ShortCode == shortCode, ct))
+                {
+                    var shortUrl = new ShortUrlEntity
+                    {
+                        ShortCode = shortCode,
+                        OwnerId = apiKeyContext.Id,
+                        LongUrl = request.OriginalUrl,
+                        ExpiresAt = request.Expire,
+                        IsActive = true
+                    };
+                    await dbContext.ShortUrls.AddAsync(shortUrl, ct);
+                    await dbContext.SaveChangesAsync(ct);
+                    await SetCacheItem(apiKeyContext, shortUrl, ct);
+
+                    logger.LogInformation("Created ShortUrl: {ShortCode} for ApiKeyId: {ApiKeyId}", shortCode, apiKeyContext.Id);
+
+                    var response = new CreateShortUrlResponse(shortCode);
+                    return response;
+                }
+
+                step++;
+            } while (step > MaxStep);
+
+            logger.LogError("Failed to generate a unique short URL after {MaxStep} attempts for ApiKeyId: {ApiKeyId}", MaxStep, apiKeyContext.Id);
+            return Error.Failure("Unable to generate a unique short URL after multiple attempts.");
+        }
+
+        public async Task<Result<EditShortUrlResponse>> EditShortUrl(ApiKeyContext apiKeyContext, string shortCode, EditShortUrlRequest request, CancellationToken ct)
+        {
+            // Validators
+            if (shortCode == null || !ShortUrlGenerator.IsValidShortCode(shortCode))
+            {
+                logger.LogWarning("Invalid ShortCode format provided by ApiKeyId: {ApiKeyId}, ShortCode: {ShortCode}", apiKeyContext.Id, shortCode);
+                return Error.Validation("The provided short URL code is not valid.");
+            }
+
+            if (string.IsNullOrEmpty(request.OriginalUrl)
+                || !Uri.IsWellFormedUriString(request.OriginalUrl, UriKind.Absolute))
+            {
+                logger.LogWarning("Invalid URL format provided by ApiKeyId: {ApiKeyId}, URL: {Url}", apiKeyContext.Id, request.OriginalUrl);
+                return Error.Validation("The provided long URL is not valid.");
+            }
+
+            if (request.Expire.HasValue && request.Expire.Value <= DateTime.UtcNow)
+            {
+                logger.LogWarning("Expiration date is in the past for ApiKeyId: {ApiKeyId}, Expire: {Expire}", apiKeyContext.Id, request.Expire);
+                return Error.Validation("The expiration date must be in the future.");
+            }
+
+            // Retrieve existing ShortUrl
+            var shortUrl = await dbContext.ShortUrls
+                .FirstOrDefaultAsync(su => su.ShortCode == shortCode && su.OwnerId == apiKeyContext.Id, ct);
+            if (shortUrl == null)
+            {
+                logger.LogWarning("ShortUrl not found for editing by ApiKeyId: {ApiKeyId}, ShortCode: {ShortCode}", apiKeyContext.Id, shortCode);
+                return Error.NotFound("The specified short URL was not found.");
+            }
+
+            // Update fields
+            shortUrl.LongUrl = request.OriginalUrl;
+            shortUrl.IsActive = request.IsActive;
+            shortUrl.ExpiresAt = request.Expire;
+            await dbContext.SaveChangesAsync(ct);
+
+            await SetCacheItem(apiKeyContext, shortUrl, ct);
+
+            return new EditShortUrlResponse(shortUrl.ShortCode);
+        }
+
+        private async Task SetCacheItem(ApiKeyContext apiKeyContext, ShortUrlEntity shortUrl, CancellationToken ct)
+        {
+            await cache.SetAsync<string?>(CacheKey.ShortUrlKey(shortUrl.ShortCode), shortUrl.LongUrl, (ctx) =>
+            {
+                if (shortUrl.ExpiresAt.HasValue)
+                {
+                    var duration = shortUrl.ExpiresAt.Value > DateTime.UtcNow
+                        ? shortUrl.ExpiresAt.Value - DateTime.UtcNow
+                        : TimeSpan.Zero;
+                    ctx.Duration = duration;
+                    ctx.DistributedCacheDuration = duration;
+                }
+            },
+            tags: [CacheKey.TagAllShortUrl, CacheKey.TagShortUrlApiKey(apiKeyContext.Id)],
+            token: ct);
+        }
+    }
+}

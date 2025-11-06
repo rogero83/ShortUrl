@@ -1,0 +1,44 @@
+@host = https://localhost:7139/
+@apiKey = api-key-local
+@apiKeyCustomUrl = api-key-local-custom-url
+
+### health
+GET {{host}}health
+Accept: application/json
+ResponseType: application/json 
+
+### Ping the API Manager
+GET {{host}}api/v1/ping
+Accept: application/json
+ResponseType: application/json 
+X-APIKEY: {{apiKey}}
+
+### Ping the API Manager
+GET {{host}}api/v1/ping
+Accept: application/json
+ResponseType: application/json 
+X-APIKEY: error
+
+### Create Short URL
+POST {{host}}api/v1/create
+Accept: application/json
+Content-Type: application/json
+ResponseType: application/json
+X-APIKEY: {{apiKey}}
+{
+  "originalUrl": "https://www.google.com/"
+}
+
+### Create Short URL - CustomCode
+POST {{host}}api/v1/create
+Accept: application/json
+Content-Type: application/json
+ResponseType: application/json
+X-APIKEY: {{apiKeyCustomUrl}}
+{
+  "originalUrl": "https://www.google.com/",
+  "shortCode":"myCustomCode"
+}
+
+### Get Url
+GET {{host}}myCustomCode
