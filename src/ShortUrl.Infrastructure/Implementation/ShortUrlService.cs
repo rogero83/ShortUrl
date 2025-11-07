@@ -124,17 +124,19 @@ namespace ShortUrl.Infrastructure.Implementation
 
         private async Task SetCacheItem(ApiKeyContext apiKeyContext, ShortUrlEntity shortUrl, CancellationToken ct)
         {
-            await cache.SetAsync<string?>(CacheKey.ShortUrlKey(shortUrl.ShortCode), shortUrl.LongUrl, (ctx) =>
-            {
-                if (shortUrl.ExpiresAt.HasValue)
+            await cache.SetAsync<ShortUrlSearchItem>(CacheKey.ShortUrlKey(shortUrl.ShortCode),
+                new ShortUrlSearchItem(shortUrl.Id, shortUrl.LongUrl),
+                (ctx) =>
                 {
-                    var duration = shortUrl.ExpiresAt.Value > DateTime.UtcNow
-                        ? shortUrl.ExpiresAt.Value - DateTime.UtcNow
-                        : TimeSpan.Zero;
-                    ctx.Duration = duration;
-                    ctx.DistributedCacheDuration = duration;
-                }
-            },
+                    if (shortUrl.ExpiresAt.HasValue)
+                    {
+                        var duration = shortUrl.ExpiresAt.Value > DateTime.UtcNow
+                            ? shortUrl.ExpiresAt.Value - DateTime.UtcNow
+                            : TimeSpan.Zero;
+                        ctx.Duration = duration;
+                        ctx.DistributedCacheDuration = duration;
+                    }
+                },
             tags: [CacheKey.TagAllShortUrl, CacheKey.TagShortUrlApiKey(apiKeyContext.Id)],
             token: ct);
         }
