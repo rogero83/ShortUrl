@@ -1,5 +1,6 @@
 ﻿using ShortUrl.Core.Contracts;
 using ShortUrl.Core.Models;
+using ShortUrl.WebApp.Models;
 using System.Diagnostics;
 
 namespace ShortUrl.WebApp.EndPoints
@@ -29,10 +30,37 @@ namespace ShortUrl.WebApp.EndPoints
                         context?.Request.Headers["X-Forwarded-For"].FirstOrDefault()
                             ?? context?.Connection.RemoteIpAddress?.ToString(),
                         context?.Request.Headers.UserAgent.ToString(),
-                        context?.Request.Headers.Referer.ToString()
+                        context?.Request.Headers.Referer.ToString(),
+                        DateTime.UtcNow
                     ), ct);
 
                     return Results.Redirect(url.LognUrl);
+                }
+                else
+                {
+                    return Results.NotFound(result.Error.Message);
+                }
+            });
+
+            app.MapGet("/preview/{shortUrl}", async (string shortUrl,
+                IReadShortUrlService svc,
+                IHttpContextAccessor httpContextAccessor,
+                CancellationToken ct) =>
+            {
+                var currentActivity = Activity.Current;
+
+                var result = await svc.GetLongUrl(shortUrl, CancellationToken.None);
+                if (result.IsSuccess)
+                {
+                    var url = result.Value;
+                    var context = httpContextAccessor.HttpContext;
+
+                    return Results.Ok(new PreviewResponse(
+                        url.LognUrl,
+                        context?.Request.Headers["X-Forwarded-For"].FirstOrDefault()
+                            ?? context?.Connection.RemoteIpAddress?.ToString(),
+                        context?.Request.Headers.UserAgent.ToString(),
+                        context?.Request.Headers.Referer.ToString()));
                 }
                 else
                 {

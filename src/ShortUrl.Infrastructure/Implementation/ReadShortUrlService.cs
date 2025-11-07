@@ -55,21 +55,15 @@ namespace ShortUrl.Infrastructure.Implementation
                     return Error.NotFound("ShortUrl not found or inactive/expired");
                 }
 
-                // Found: create item and cache it with the correct tags and duration                
+                // Found: create item and cache it with the correct tags and duration
+                TimeSpan? duration = null;
                 if (entity.ExpiresAt.HasValue)
                 {
-                    var duration = entity.ExpiresAt.Value > DateTime.UtcNow
+                    duration = entity.ExpiresAt.Value > DateTime.UtcNow
                         ? entity.ExpiresAt.Value - DateTime.UtcNow
                         : TimeSpan.Zero;
 
-                    // Only cache if the expiration is in the future
-                    if (duration > TimeSpan.Zero)
-                    {
-                        options
-                            .SetDuration(duration)
-                            .SetDistributedCacheDuration(duration);
-                    }
-                    else
+                    if (duration <= TimeSpan.Zero)
                     {
                         // If for some reason it's already expired, treat as not found
                         logger.LogWarning("ShortUrl found but already expired: {ShortUrl}", shortCode);
@@ -82,7 +76,17 @@ namespace ShortUrl.Infrastructure.Implementation
                 }
 
                 var itemToCache = new ShortUrlSearchItem(entity.Id, entity.LongUrl);
-                await cache.SetAsync(cacheKey, itemToCache, options,
+
+                await cache.SetAsync(cacheKey, itemToCache,
+                    (ctx) =>
+                    {
+                        if (duration.HasValue)
+                        {
+                            // We've already checked for duration > Zero above                            
+                            ctx.Duration = duration.Value;
+                            ctx.DistributedCacheDuration = duration.Value;
+                        }
+                    },
                     tags: [CacheKey.TagAllShortUrl, CacheKey.TagShortUrlApiKey(entity.OwnerId)],
                     token: ct);
 
@@ -93,6 +97,12 @@ namespace ShortUrl.Infrastructure.Implementation
                 logger.LogError(ex, "Error retrieving LongUrl for ShortUrl: {ShortUrl}", shortCode);
                 return Error.Failure("An error occurred while processing your request.");
             }
+        }
+
+        public async Task<bool> Exists(string shortCode, CancellationToken ct)
+        {
+            var result = await GetLongUrl(shortCode, ct);
+            return result.IsSuccess;
         }
     }
 }

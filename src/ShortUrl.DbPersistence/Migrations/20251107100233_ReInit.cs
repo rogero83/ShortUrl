@@ -7,7 +7,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace ShortUrl.DbPersistence.Migrations
 {
     /// <inheritdoc />
-    public partial class Init : Migration
+    public partial class ReInit : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -22,7 +22,8 @@ namespace ShortUrl.DbPersistence.Migrations
                     Email = table.Column<string>(type: "text", nullable: false),
                     Name = table.Column<string>(type: "text", nullable: false),
                     IsActive = table.Column<bool>(type: "boolean", nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    CanSetCustomShortCodes = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false)
                 },
                 constraints: table =>
                 {
@@ -62,10 +63,10 @@ namespace ShortUrl.DbPersistence.Migrations
                     Id = table.Column<long>(type: "bigint", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     ShortUrlId = table.Column<long>(type: "bigint", nullable: false),
-                    IpAddress = table.Column<string>(type: "text", nullable: false),
-                    UserAgent = table.Column<string>(type: "text", nullable: false),
-                    Referrer = table.Column<string>(type: "text", nullable: false),
-                    ClickedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                    IpAddress = table.Column<string>(type: "text", nullable: true),
+                    UserAgent = table.Column<string>(type: "text", nullable: true),
+                    Referrer = table.Column<string>(type: "text", nullable: true),
+                    ClickedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "now() at time zone 'utc'")
                 },
                 constraints: table =>
                 {
@@ -85,20 +86,21 @@ namespace ShortUrl.DbPersistence.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_ClickEvents_ShortUrlId",
+                name: "IX_ClickEvents_ShortUrlId_ClickedAt",
                 table: "ClickEvents",
-                column: "ShortUrlId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_ShortUrl_ShortCode_Unique",
-                table: "ShortUrls",
-                column: "ShortCode",
-                unique: true);
+                columns: new[] { "ShortUrlId", "ClickedAt" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_ShortUrls_OwnerId",
                 table: "ShortUrls",
                 column: "OwnerId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ShortUrls_ShortCode",
+                table: "ShortUrls",
+                column: "ShortCode",
+                unique: true,
+                filter: "\"IsActive\"");
         }
 
         /// <inheritdoc />

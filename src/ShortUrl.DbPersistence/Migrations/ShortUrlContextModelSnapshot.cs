@@ -71,26 +71,25 @@ namespace ShortUrl.DbPersistence.Migrations
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
                     b.Property<DateTime>("ClickedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("now() at time zone 'utc'");
 
                     b.Property<string>("IpAddress")
-                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<string>("Referrer")
-                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<long>("ShortUrlId")
                         .HasColumnType("bigint");
 
                     b.Property<string>("UserAgent")
-                        .IsRequired()
                         .HasColumnType("text");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ShortUrlId");
+                    b.HasIndex("ShortUrlId", "ClickedAt");
 
                     b.ToTable("ClickEvents");
                 });
@@ -135,7 +134,7 @@ namespace ShortUrl.DbPersistence.Migrations
 
                     b.HasIndex("ShortCode")
                         .IsUnique()
-                        .HasDatabaseName("IX_ShortUrl_ShortCode_Unique");
+                        .HasFilter("\"IsActive\"");
 
                     b.ToTable("ShortUrls");
                 });

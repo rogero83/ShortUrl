@@ -11,5 +11,7 @@ namespace ShortUrl.Core.Contracts
         /// <param name="shortCode"></param>
         /// <returns></returns>
         Task<Result<ShortUrlSearchItem>> GetLongUrl(string shortCode, CancellationToken ct);
+
+        Task<bool> Exists(string shortCode, CancellationToken ct);
     }
 }

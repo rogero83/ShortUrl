@@ -20,7 +20,7 @@ namespace ShortUrl.Infrastructure.Implementation
                     IpAddress = message.IpAddress,
                     UserAgent = message.UserAgent,
                     Referrer = message.Referrer,
-                    ClickedAt = DateTime.UtcNow
+                    ClickedAt = message.ClickedAt
                 };
                 await context.ClickEvents.AddAsync(entity, stoppingToken);
                 await context.SaveChangesAsync(stoppingToken);

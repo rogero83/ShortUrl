@@ -16,6 +16,7 @@ app.MapDefaultEndpoints();
 app.MapGet("/", () => "Simple ShortUrl Project");
 
 app.MapShortUrlEndpoints()
-    .MapManageShortUrlEndpoints();
+    .MapManageShortUrlEndpoints()
+    .MapQrCodeEndpoints();
 
 await app.RunAsync();

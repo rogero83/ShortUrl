@@ -12,8 +12,8 @@ using ShortUrl.DbPersistence;
 namespace ShortUrl.DbPersistence.Migrations
 {
     [DbContext(typeof(ShortUrlContext))]
-    [Migration("20251012152036_Init")]
-    partial class Init
+    [Migration("20251107100233_ReInit")]
+    partial class ReInit
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -36,6 +36,11 @@ namespace ShortUrl.DbPersistence.Migrations
                     b.Property<string>("ApiKey")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<bool>("CanSetCustomShortCodes")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -69,26 +74,25 @@ namespace ShortUrl.DbPersistence.Migrations
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
                     b.Property<DateTime>("ClickedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("now() at time zone 'utc'");
 
                     b.Property<string>("IpAddress")
-                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<string>("Referrer")
-                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<long>("ShortUrlId")
                         .HasColumnType("bigint");
 
                     b.Property<string>("UserAgent")
-                        .IsRequired()
                         .HasColumnType("text");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ShortUrlId");
+                    b.HasIndex("ShortUrlId", "ClickedAt");
 
                     b.ToTable("ClickEvents");
                 });
@@ -133,7 +137,7 @@ namespace ShortUrl.DbPersistence.Migrations
 
                     b.HasIndex("ShortCode")
                         .IsUnique()
-                        .HasDatabaseName("IX_ShortUrl_ShortCode_Unique");
+                        .HasFilter("\"IsActive\"");
 
                     b.ToTable("ShortUrls");
                 });

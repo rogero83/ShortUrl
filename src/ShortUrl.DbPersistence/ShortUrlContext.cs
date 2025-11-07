@@ -45,12 +45,18 @@ namespace ShortUrl.DbPersistence
                 entity.Property(e => e.Id).UseIdentityColumn();
 
                 entity.Property(e => e.ShortCode).IsRequired();
-                entity.HasIndex(e => e.ShortCode).IsUnique()
-                    .HasDatabaseName("IX_ShortUrl_ShortCode_Unique");
+
+                // Replaced the old index with a partial index for active URLs
+                entity.HasIndex(e => e.ShortCode)
+                    .IsUnique()
+                    .HasFilter("\"IsActive\"");
 
                 entity.Property(e => e.LongUrl).IsRequired();
                 entity.Property(e => e.OwnerId).IsRequired();
                 entity.Property(e => e.IsActive).IsRequired();
+
+                // Added an index on the foreign key
+                entity.HasIndex(e => e.OwnerId);
 
                 // Navigation property
                 entity.HasMany(e => e.ClickEvents)
@@ -64,6 +70,14 @@ namespace ShortUrl.DbPersistence
                 entity.Property(e => e.Id).UseIdentityColumn();
 
                 entity.Property(e => e.ShortUrlId).IsRequired();
+
+                // Assuming ClickedAt exists on the entity
+                entity.Property(e => e.ClickedAt)
+                    .IsRequired()
+                    .HasDefaultValueSql("now() at time zone 'utc'");
+
+                // Added a composite index for performant queries
+                entity.HasIndex(e => new { e.ShortUrlId, e.ClickedAt });
             });
         }
     }

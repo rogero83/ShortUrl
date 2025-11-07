@@ -42,3 +42,9 @@ X-APIKEY: {{apiKeyCustomUrl}}
 
 ### Get Url
 GET {{host}}myCustomCode
+
+### Preview Url
+GET {{host}}preview/myCustomCode
+
+### Qr Url
+GET {{host}}qr/myCustomCode
