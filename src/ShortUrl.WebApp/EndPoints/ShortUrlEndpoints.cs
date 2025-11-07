@@ -22,7 +22,7 @@ namespace ShortUrl.WebApp.EndPoints
                     var url = result.Value;
                     var context = httpContextAccessor.HttpContext;
 
-                    await channel.WriteAsync(new ClickEventItem(
+                    _ = channel.WriteAsync(new ClickEventItem(
                         currentActivity,
                         url.Id,
                         // Get additional info from HttpContext

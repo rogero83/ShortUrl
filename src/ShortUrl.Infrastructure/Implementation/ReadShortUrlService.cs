@@ -14,55 +14,79 @@ namespace ShortUrl.Infrastructure.Implementation
         ILogger<ReadShortUrlService> logger)
         : IReadShortUrlService
     {
+        private readonly TimeSpan negativeTimeStamp = TimeSpan.FromMinutes(10);
+
         public async Task<Result<ShortUrlSearchItem>> GetLongUrl(string shortCode, CancellationToken ct)
         {
             if (!ShortUrlGenerator.IsValidShortCode(shortCode))
-                Error.Validation("Invalid ShortUrl format");
+            {
+                return Error.Validation("Invalid ShortUrl format");
+            }
 
-            long apiKeyId = 0;
+            var cacheKey = CacheKey.ShortUrlKey(shortCode);
+            var options = new FusionCacheEntryOptions();
 
+            // Try to get from cache first. This handles both positive and negative cache hits.
+            var maybeItem = await cache.TryGetAsync<ShortUrlSearchItem?>(cacheKey, token: ct);
+            if (maybeItem.HasValue)
+            {
+                return maybeItem.Value is not null
+                    ? maybeItem.Value
+                    : Error.NotFound("ShortUrl not found or inactive/expired");
+            }
+
+            // If we are here, it's a real cache miss. Let's go to the database.
             try
             {
-                var searchItem = await cache.GetOrSetAsync<ShortUrlSearchItem?>(CacheKey.ShortUrlKey(shortCode),
-                    async (ctx, ct) =>
-                    {
-                        var entity = await context.ShortUrls.AsNoTracking()
-                            .Where(su => su.ShortCode == shortCode)
-                            .FirstOrDefaultAsync(ct);
-                        if (entity == null || !entity.IsActive ||
-                            (entity.ExpiresAt.HasValue && entity.ExpiresAt.Value < DateTime.UtcNow))
-                        {
-                            logger.LogWarning("ShortUrl not found or inactive/expired: {ShortUrl}", shortCode);
+                var entity = await context.ShortUrls.AsNoTracking()
+                    .Where(su => su.ShortCode == shortCode)
+                    .FirstOrDefaultAsync(ct);
 
-                            ctx.Options.Duration = TimeSpan.FromMinutes(10);
-                            ctx.Options.DistributedCacheDuration = TimeSpan.FromMinutes(10);
-
-                            return null;
-                        }
-
-                        apiKeyId = entity.OwnerId;
-
-                        if (entity.ExpiresAt.HasValue)
-                        {
-                            var duration = entity.ExpiresAt.Value > DateTime.UtcNow
-                                ? entity.ExpiresAt.Value - DateTime.UtcNow
-                                : TimeSpan.Zero;
-                            ctx.Options.Duration = duration;
-                            ctx.Options.DistributedCacheDuration = duration;
-                        }
-
-                        return new ShortUrlSearchItem(entity.Id, entity.LongUrl);
-                    },
-                    tags: [CacheKey.TagAllShortUrl,
-                        CacheKey.TagShortUrlApiKey(apiKeyId)],
-                    token: ct);
-
-                if (searchItem == null)
+                // Not found, inactive, or expired
+                if (entity == null || !entity.IsActive || (entity.ExpiresAt.HasValue && entity.ExpiresAt.Value < DateTime.UtcNow))
                 {
+                    logger.LogWarning("ShortUrl not found or inactive/expired: {ShortUrl}", shortCode);
+                    // Set a negative cache entry to prevent hammering the DB for non-existent URLs
+                    options
+                        .SetDuration(negativeTimeStamp)
+                        .SetDistributedCacheDuration(negativeTimeStamp);
+                    await cache.SetAsync<ShortUrlSearchItem?>(cacheKey, null, options, token: ct);
+
                     return Error.NotFound("ShortUrl not found or inactive/expired");
                 }
 
-                return searchItem;
+                // Found: create item and cache it with the correct tags and duration                
+                if (entity.ExpiresAt.HasValue)
+                {
+                    var duration = entity.ExpiresAt.Value > DateTime.UtcNow
+                        ? entity.ExpiresAt.Value - DateTime.UtcNow
+                        : TimeSpan.Zero;
+
+                    // Only cache if the expiration is in the future
+                    if (duration > TimeSpan.Zero)
+                    {
+                        options
+                            .SetDuration(duration)
+                            .SetDistributedCacheDuration(duration);
+                    }
+                    else
+                    {
+                        // If for some reason it's already expired, treat as not found
+                        logger.LogWarning("ShortUrl found but already expired: {ShortUrl}", shortCode);
+                        options
+                            .SetDuration(negativeTimeStamp)
+                            .SetDistributedCacheDuration(negativeTimeStamp);
+                        await cache.SetAsync<ShortUrlSearchItem?>(cacheKey, null, options, token: ct);
+                        return Error.NotFound("ShortUrl not found or inactive/expired");
+                    }
+                }
+
+                var itemToCache = new ShortUrlSearchItem(entity.Id, entity.LongUrl);
+                await cache.SetAsync(cacheKey, itemToCache, options,
+                    tags: [CacheKey.TagAllShortUrl, CacheKey.TagShortUrlApiKey(entity.OwnerId)],
+                    token: ct);
+
+                return itemToCache;
             }
             catch (Exception ex)
             {
