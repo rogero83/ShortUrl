@@ -101,6 +101,7 @@ namespace ShortUrl.Infrastructure.Implementation
 
         public async Task<bool> Exists(string shortCode, CancellationToken ct)
         {
+            // Use GetLongUrl to leverage caching logic
             var result = await GetLongUrl(shortCode, ct);
             return result.IsSuccess;
         }

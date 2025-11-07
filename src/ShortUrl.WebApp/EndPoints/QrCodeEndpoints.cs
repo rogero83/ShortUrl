@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using QRCoder;
 using ShortUrl.Core.Contracts;
+using ShortUrl.WebApp.Utility;
 
 namespace ShortUrl.WebApp.EndPoints;
 
@@ -48,7 +49,7 @@ public static class QrCodeEndpoints
                 default:
                     return Results.BadRequest("Unsupported format. Please use 'png' or 'svg'.");
             }
-        });
+        }).RequireRateLimiting(RateLimiterUtility.BaseFixed);
 
         return app;
     }

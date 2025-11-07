@@ -19,36 +19,6 @@ namespace ShortUrl.Infrastructure.Implementation
 
         public async Task<Result<CreateShortUrlResponse>> CreateShortUrl(ApiKeyContext apiKeyContext, CreateShortUrlRequest request, CancellationToken ct)
         {
-            //// Validators
-            //if (string.IsNullOrEmpty(request.OriginalUrl)
-            //    || !Uri.IsWellFormedUriString(request.OriginalUrl, UriKind.Absolute))
-            //{
-            //    logger.LogWarning("Invalid URL format provided by ApiKeyId: {ApiKeyId}, URL: {Url}", apiKeyContext.Id, request.OriginalUrl);
-            //    return Error.Validation("The provided long URL is not valid.");
-            //}
-
-            //if (request.Expire.HasValue && request.Expire.Value <= DateTime.UtcNow)
-            //{
-            //    logger.LogWarning("Expiration date is in the past for ApiKeyId: {ApiKeyId}, Expire: {Expire}", apiKeyContext.Id, request.Expire);
-            //    return Error.Validation("The expiration date must be in the future.");
-            //}
-
-            //// Check for custom short code
-            //if (request.ShortCode != null)
-            //{
-            //    if (!apiKeyContext.CanSetCustomShortCodes)
-            //    {
-            //        logger.LogWarning("Custom ShortCode creation not allowed for ApiKeyId: {ApiKey}", apiKeyContext.Id);
-            //        return Error.Validation("Custom short URL codes are not allowed for your API key.");
-            //    }
-
-            //    if (!ShortUrlGenerator.IsValidShortCode(request.ShortCode))
-            //    {
-            //        logger.LogWarning("Invalid ShortCode format provided by ApiKeyId: {ApiKeyId}, ShortCode: {ShortCode}", apiKeyContext.Id, request.ShortCode);
-            //        return Error.Validation("The provided short URL code is not valid.");
-            //    }
-            //}
-
             var step = 0;
             do
             {

@@ -1,6 +1,7 @@
 ﻿using ShortUrl.Core.Contracts;
 using ShortUrl.Core.Models;
 using ShortUrl.WebApp.Models;
+using ShortUrl.WebApp.Utility;
 using System.Diagnostics;
 
 namespace ShortUrl.WebApp.EndPoints
@@ -40,7 +41,7 @@ namespace ShortUrl.WebApp.EndPoints
                 {
                     return Results.NotFound(result.Error.Message);
                 }
-            });
+            }).RequireRateLimiting(RateLimiterUtility.BaseFixed);
 
             app.MapGet("/preview/{shortUrl}", async (string shortUrl,
                 IReadShortUrlService svc,
@@ -66,7 +67,7 @@ namespace ShortUrl.WebApp.EndPoints
                 {
                     return Results.NotFound(result.Error.Message);
                 }
-            });
+            }).RequireRateLimiting(RateLimiterUtility.BaseFixed);
 
             return app;
         }

@@ -101,7 +101,7 @@ namespace ShortUrl.Aspire.Test
 
             var createRequest = new CreateShortUrlRequest(
                 "https://www.example.com/some/long/url",
-                Expire: DateTime.UtcNow.AddSeconds(3));
+                Expire: DateTime.UtcNow.AddSeconds(5));
 
             // Create short URL            
             using var createResponse = await client
@@ -112,7 +112,7 @@ namespace ShortUrl.Aspire.Test
             Assert.NotNull(shortUrl);
 
             // Wait until expired
-            await Task.Delay(TimeSpan.FromSeconds(3), fixture.CancellationToken);
+            await Task.Delay(TimeSpan.FromSeconds(5), fixture.CancellationToken);
 
             // Call short URL
             using var callResponse = await fixture.ClientShortUrlApp()

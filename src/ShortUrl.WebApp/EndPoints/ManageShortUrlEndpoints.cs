@@ -13,7 +13,8 @@ namespace ShortUrl.WebApp.EndPoints
         public static WebApplication MapManageShortUrlEndpoints(this WebApplication app)
         {
             var appGroup = app.MapGroup("/api/v1/")
-                .AddEndpointFilter<RequireApiKeyFilter>();
+                .AddEndpointFilter<RequireApiKeyFilter>()
+                .RequireRateLimiting(RateLimiterUtility.BaseFixed);
 
             appGroup.MapGet("ping", (
                 IApiKeyContextAccessor apiKeyContext,
