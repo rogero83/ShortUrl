@@ -39,6 +39,6 @@ public class CreateAndEdit(StartupFixture fixture)
 
         // Assert redirection
         Assert.Equal(HttpStatusCode.Redirect, callResponse.StatusCode);
-        Assert.Equal(editRequest.OriginalUrl, callResponse.Headers.Location.ToString());
+        Assert.Equal(editRequest.OriginalUrl, callResponse.Headers.Location!.ToString());
     }
 }

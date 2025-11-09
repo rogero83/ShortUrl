@@ -18,7 +18,7 @@ namespace ShortUrl.Common
             return new string(shortCode);
         }
 
-        public static bool IsValidShortCode(string shortCode)
+        public static bool IsValidShortCode(string? shortCode)
         {
             if (string.IsNullOrEmpty(shortCode))
                 return false;

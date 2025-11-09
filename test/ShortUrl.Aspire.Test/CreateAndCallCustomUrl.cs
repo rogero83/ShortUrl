@@ -32,7 +32,7 @@ public class CreateAndCallCustomUrl(StartupFixture fixture)
 
         // Assert redirection
         Assert.Equal(HttpStatusCode.Redirect, callResponse.StatusCode);
-        Assert.Equal(createRequest.OriginalUrl, callResponse.Headers.Location.ToString());
+        Assert.Equal(createRequest.OriginalUrl, callResponse.Headers.Location!.ToString());
     }
 
     [Fact]
@@ -61,7 +61,7 @@ public class CreateAndCallCustomUrl(StartupFixture fixture)
 
         // Assert redirection
         Assert.Equal(HttpStatusCode.Redirect, callResponse.StatusCode);
-        Assert.Equal(createRequest.OriginalUrl, callResponse.Headers.Location.ToString());
+        Assert.Equal(createRequest.OriginalUrl, callResponse.Headers.Location!.ToString());
     }
 
     [Theory]
