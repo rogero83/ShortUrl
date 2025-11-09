@@ -49,7 +49,11 @@ public static class QrCodeEndpoints
                 default:
                     return Results.BadRequest("Unsupported format. Please use 'png' or 'svg'.");
             }
-        }).RequireRateLimiting(RateLimiterUtility.BaseFixed);
+        }).RequireRateLimiting(RateLimiterUtility.BaseFixed)
+        .WithTags(ApiTags.Discover)
+        .WithDescription("Generate QrCode")
+        .Produces(StatusCodes.Status200OK, additionalContentTypes: ["image/png", "image/svg+xml"])
+        .Produces(StatusCodes.Status400BadRequest);
 
         return app;
     }

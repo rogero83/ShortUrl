@@ -41,7 +41,12 @@ namespace ShortUrl.WebApp.EndPoints
                 {
                     return Results.NotFound(result.Error.Message);
                 }
-            }).RequireRateLimiting(RateLimiterUtility.BaseFixed);
+            }).RequireRateLimiting(RateLimiterUtility.BaseFixed)
+            .WithOpenApi()
+            .WithTags(ApiTags.Discover)
+            .WithDescription("")
+            .Produces(StatusCodes.Status302Found)
+            .Produces(StatusCodes.Status404NotFound);
 
             app.MapGet("/preview/{shortUrl}", async (string shortUrl,
                 IReadShortUrlService svc,
@@ -67,7 +72,11 @@ namespace ShortUrl.WebApp.EndPoints
                 {
                     return Results.NotFound(result.Error.Message);
                 }
-            }).RequireRateLimiting(RateLimiterUtility.BaseFixed);
+            }).RequireRateLimiting(RateLimiterUtility.BaseFixed)
+            .WithTags(ApiTags.Discover)
+            .WithDescription("Testing url")
+            .Produces<PreviewResponse>()
+            .Produces<string>(StatusCodes.Status404NotFound);
 
             return app;
         }

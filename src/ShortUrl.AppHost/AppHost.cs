@@ -26,7 +26,8 @@ var consoleApp = builder.AddProject<Projects.ShortUrl_DevSupport>("shorturl-devs
     .WithAnnotation(new CustomTagAnnotation("console"));
 
 builder.AddProject<Projects.ShortUrl_WebApp>("shorturl-webapp")
-    //.WithReplicas(3)
+    .WithExternalHttpEndpoints()
+    //.WithReplicas(3)    
     .WithReference(db).WaitFor(pgsql)
     .WithReference(redis).WaitFor(redis)
     .WaitFor(consoleApp);

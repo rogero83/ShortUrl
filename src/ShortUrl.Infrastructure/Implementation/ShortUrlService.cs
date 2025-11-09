@@ -96,18 +96,18 @@ namespace ShortUrl.Infrastructure.Implementation
         {
             await cache.SetAsync<ShortUrlSearchItem>(CacheKey.ShortUrlKey(shortUrl.ShortCode),
                 new ShortUrlSearchItem(shortUrl.Id, shortUrl.LongUrl),
-                (ctx) =>
+                (opt) =>
                 {
                     if (shortUrl.ExpiresAt.HasValue)
                     {
                         var duration = shortUrl.ExpiresAt.Value > DateTime.UtcNow
                             ? shortUrl.ExpiresAt.Value - DateTime.UtcNow
                             : TimeSpan.Zero;
-                        ctx.Duration = duration;
-                        ctx.DistributedCacheDuration = duration;
+                        opt.Duration = duration;
+                        opt.DistributedCacheDuration = duration;
                     }
                 },
-            tags: [CacheKey.TagAllShortUrl, CacheKey.TagShortUrlApiKey(apiKeyContext.Id)],
+            tags: [CacheKey.TagAllShortUrl],
             token: ct);
         }
     }

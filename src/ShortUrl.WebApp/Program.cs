@@ -1,3 +1,4 @@
+using Scalar.AspNetCore;
 using ShortUrl.Infrastructure;
 using ShortUrl.WebApp.EndPoints;
 using ShortUrl.WebApp.Integrations;
@@ -6,6 +7,8 @@ using System.Threading.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.AddServiceDefaults();
+
+builder.Services.AddOpenApi();
 
 builder.AddInfrastructureService();
 builder.AddIntegrationsWebService(builder.Configuration);
@@ -25,13 +28,26 @@ builder.Services.AddRateLimiter(options =>
 
 var app = builder.Build();
 
+// ScalaApi integration, only in Development environment
+if (app.Environment.IsDevelopment())
+{
+    app.MapOpenApi();
+    app.MapScalarApiReference(options =>
+    {
+        options.WithTitle("MyShortUrl")
+            .ForceDarkMode();
+    });
+}
+
 app.UseRateLimiter();
 
 app.UseStaticFiles();
 
 app.MapDefaultEndpoints();
 
-app.MapGet("/", () => "Simple ShortUrl Project");
+app.MapGet("/", () => "Simple ShortUrl Project")
+    .ExcludeFromApiReference()
+    .ExcludeFromDescription();
 
 app.MapShortUrlEndpoints()
     .MapManageShortUrlEndpoints()

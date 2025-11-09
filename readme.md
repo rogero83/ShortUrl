@@ -1,42 +1,46 @@
 # ShortUrl
 
-Breve progetto di esempio per un servizio di URL shortening (redirect) con API di gestione.
+A simple example project for a URL shortening (redirect) service with management APIs.
 
-Caratteristiche principali
+Key Features
 
-- Servizio Web (`ShortUrl.WebApp`): espone due tipi di endpoint:
- - Redirect pubblico: `GET /{shortUrl}` — risolve il `shortCode` e fa redirect verso la `LongUrl`.
- - API di gestione sotto `/api/v1/` protetta da API key: `ping`, `create`, `edit`.
-- Persistenza (`ShortUrl.DbPersistence`): Entity Framework Core con entità per ApiKeys, ShortUrls e ClickEvents.
-- Applicazione di supporto (`ShortUrl.DevSupport`): app console usata per applicare le migrazioni EF e per eseguire un seed di sviluppo.
-- Host distribuito (`ShortUrl.AppHost`): definisce i servizi locali (Postgres, Redis) e i progetti da avviare in ambiente di sviluppo.
+- Web Service (`ShortUrl.WebApp`): exposes two types of endpoints:
+ - Public redirect: `GET /{shortUrl}` — resolves the `shortCode` and redirects to the `LongUrl`.
+ - Management API under `/api/v1/` protected by API key: `ping`, `create`, `edit`.
+- Persistence (`ShortUrl.DbPersistence`): Entity Framework Core with entities for ApiKeys, ShortUrls, and ClickEvents.
+- Support Application (`ShortUrl.DevSupport`): console app used to apply EF migrations and run development seed data.
+- Distributed Host (`ShortUrl.AppHost`): defines local services (Postgres, Redis) and projects to launch in the development environment.
 
-Seed di sviluppo
+Development Seed
 
-Il progetto `ShortUrl.DevSupport` aggiunge due API key d'esempio quando eseguito con l'argomento `seed`:
-- `api-key-local` (permessi base)
-- `api-key-local-custom-url` (permesso di impostare short code personalizzati)
+The `ShortUrl.DevSupport` project adds two example API keys when run with the `seed` argument:
+- `api-key-local` (basic permissions)
+- `api-key-local-custom-url` (permission to set custom short codes)
 
-Esempi di comandi utili
+Useful Commands
 
-- Creare una migration (eseguito dalla cartella `src`):
+- Create a migration (run from the `src` folder):
 
  `dotnet ef migrations add <MigrationName> --project ShortUrl.DbPersistence --startup-project ShortUrl.DevSupport`
 
-- Applicare migrazioni e seed con l'app di supporto (da cartella `src`):
+- Apply migrations and seed with the support app (from `src` folder):
 
  `dotnet run --project ShortUrl.DevSupport -- migrate seed`
 
-- Avviare il servizio Web (da cartella `src/ShortUrl.WebApp` oppure da `src` con `--project`):
+- Start the Web service (from `src/ShortUrl.WebApp` folder or from `src` with `--project`):
 
  `dotnet run --project ShortUrl.WebApp`
 
-- Avviare l'host di sviluppo (se disponibile, avvia Postgres/Redis e i progetti definiti):
+- Start the development host (if available, launches Postgres/Redis and defined projects):
 
  `dotnet run --project ShortUrl.AppHost`
 
-Punti importanti
+Key Points
 
-- La route di redirect legge alcune informazioni della richiesta (IP, User-Agent, Referer) e scrive un evento di click in un canale per l'elaborazione asincrona.
-- Le API di gestione usano validazione (`FluentValidation`) e richiedono la chiave API presente nella tabella `ApiKeys` per operazioni protette.
+- The redirect route reads request information (IP, User-Agent, Referer) and writes a click event to a channel for asynchronous processing.
+- Management APIs use validation (`FluentValidation`) and require an API key present in the `ApiKeys` table for protected operations.
+
+Contacts
+
+- Repository: local in this folder. For contributions, open pull requests on the main remote.
 
