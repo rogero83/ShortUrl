@@ -30,4 +30,9 @@ namespace ShortUrl.WebApp
             return await next(context);
         }
     }
+
+    /// <summary>
+    /// Used for swagger doc
+    /// </summary>
+    public class RequireApiKeyMetaData { }
 }

@@ -42,7 +42,6 @@ namespace ShortUrl.WebApp.EndPoints
                     return Results.NotFound(result.Error.Message);
                 }
             }).RequireRateLimiting(RateLimiterUtility.BaseFixed)
-            .WithOpenApi()
             .WithTags(ApiTags.Discover)
             .WithDescription("")
             .Produces(StatusCodes.Status302Found)

@@ -1,4 +1,4 @@
-using Scalar.AspNetCore;
+using Microsoft.OpenApi.Models;
 using ShortUrl.Infrastructure;
 using ShortUrl.WebApp.EndPoints;
 using ShortUrl.WebApp.Integrations;
@@ -8,7 +8,27 @@ using System.Threading.RateLimiting;
 var builder = WebApplication.CreateBuilder(args);
 builder.AddServiceDefaults();
 
-builder.Services.AddOpenApi();
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new OpenApiInfo
+    {
+        Title = "My Minimal API (.NET 9)",
+        Version = "v1",
+        Description = "Esempio API protetta da header X-APIKEY"
+    });
+
+    c.AddSecurityDefinition("ApiKey", new OpenApiSecurityScheme
+    {
+        Description = "Inserisci la tua chiave API nel campo X-APIKEY",
+        Type = SecuritySchemeType.ApiKey,
+        Name = "X-APIKEY",
+        In = ParameterLocation.Header,
+        Scheme = "ApiKeyScheme"
+    });
+
+    c.OperationFilter<ApiKeyOperationFilter>();
+});
 
 builder.AddInfrastructureService();
 builder.AddIntegrationsWebService(builder.Configuration);
@@ -31,12 +51,8 @@ var app = builder.Build();
 // ScalaApi integration, only in Development environment
 if (app.Environment.IsDevelopment())
 {
-    app.MapOpenApi();
-    app.MapScalarApiReference(options =>
-    {
-        options.WithTitle("MyShortUrl")
-            .ForceDarkMode();
-    });
+    app.UseSwagger();
+    app.UseSwaggerUI();
 }
 
 app.UseRateLimiter();
@@ -46,7 +62,6 @@ app.UseStaticFiles();
 app.MapDefaultEndpoints();
 
 app.MapGet("/", () => "Simple ShortUrl Project")
-    .ExcludeFromApiReference()
     .ExcludeFromDescription();
 
 app.MapShortUrlEndpoints()

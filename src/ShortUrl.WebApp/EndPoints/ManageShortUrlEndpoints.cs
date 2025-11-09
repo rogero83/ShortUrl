@@ -14,7 +14,9 @@ namespace ShortUrl.WebApp.EndPoints
         {
             var appGroup = app.MapGroup("/api/v1/")
                 .AddEndpointFilter<RequireApiKeyFilter>()
-                .RequireRateLimiting(RateLimiterUtility.BaseFixed);
+                .RequireRateLimiting(RateLimiterUtility.BaseFixed)
+                .WithTags(ApiTags.Api)
+                .WithMetadata(new RequireApiKeyMetaData());
 
             appGroup.MapGet("ping", (
                 IApiKeyContextAccessor apiKeyContext,
@@ -25,7 +27,7 @@ namespace ShortUrl.WebApp.EndPoints
                     Message = "Pong",
                     ApiKey = apiKeyContext.Current
                 });
-            });
+            }).WithMetadata(new RequireApiKeyMetaData());
 
             appGroup.MapPost("create", async (IApiKeyContextAccessor apiKeyAccessor,
                 CreateShortUrlRequest request, [FromServices] IValidator<CreateShortUrlRequest> validator, IShortUrlService svc, CancellationToken ct) =>
