@@ -13,14 +13,14 @@ builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo
     {
-        Title = "My Minimal API (.NET 9)",
+        Title = "My Short Url",
         Version = "v1",
-        Description = "Esempio API protetta da header X-APIKEY"
+        Description = "Simple project for a URL shortening"
     });
 
     c.AddSecurityDefinition("ApiKey", new OpenApiSecurityScheme
     {
-        Description = "Inserisci la tua chiave API nel campo X-APIKEY",
+        Description = "Insert your X-APIKEY",
         Type = SecuritySchemeType.ApiKey,
         Name = "X-APIKEY",
         In = ParameterLocation.Header,
