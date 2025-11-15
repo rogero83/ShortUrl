@@ -35,7 +35,7 @@ namespace ShortUrl.Infrastructure.Implementation
                     };
                     await dbContext.ShortUrls.AddAsync(shortUrl, ct);
                     await dbContext.SaveChangesAsync(ct);
-                    await SetCacheItem(apiKeyContext, shortUrl, ct);
+                    await SetCacheItem(shortUrl, ct);
 
                     logger.LogInformation("Created ShortUrl: {ShortCode} for ApiKeyId: {ApiKeyId}", shortCode, apiKeyContext.Id);
 
@@ -87,12 +87,73 @@ namespace ShortUrl.Infrastructure.Implementation
             shortUrl.ExpiresAt = request.Expire;
             await dbContext.SaveChangesAsync(ct);
 
-            await SetCacheItem(apiKeyContext, shortUrl, ct);
+            await SetCacheItem(shortUrl, ct);
 
             return new EditShortUrlResponse(shortUrl.ShortCode);
         }
 
-        private async Task SetCacheItem(ApiKeyContext apiKeyContext, ShortUrlEntity shortUrl, CancellationToken ct)
+        public async Task<Result<ShortCodesResponse>> ListShortUrls(ApiKeyContext current, ShortCodesRequest request, CancellationToken ct)
+        {
+            var query = dbContext.ShortUrls
+                .Where(su => su.OwnerId == current.Id);
+
+            var totalItems = await query.CountAsync(ct);
+
+            switch (request.OrderField)
+            {
+                case OrderType.CreatedAtDesc:
+                    query = query.OrderByDescending(su => su.CreatedAt);
+                    break;
+                case OrderType.CreatedAtAsc:
+                    query = query.OrderBy(su => su.CreatedAt);
+                    break;
+                case OrderType.ExpireAtDesc:
+                    query = query.OrderByDescending(su => su.ExpiresAt);
+                    break;
+                case OrderType.ExpireAtAsc:
+                    query = query.OrderBy(su => su.ExpiresAt);
+                    break;
+                case OrderType.TotalClicksDesc:
+                    query = query.OrderByDescending(su => su.TotalClicks);
+                    break;
+                case OrderType.TotalClicksAsc:
+                    query = query.OrderBy(su => su.TotalClicks);
+                    break;
+                case OrderType.UniqueClicksDesc:
+                    query = query.OrderByDescending(su => su.UniqueClicks);
+                    break;
+                case OrderType.UniqueClicksAsc:
+                    query = query.OrderBy(su => su.UniqueClicks);
+                    break;
+                default:
+                    return Error.Validation("Invalid order field specified.");
+            }
+
+            var shortUrls = await query
+                .Skip((request.Page - 1) * request.ItemByPage)
+                .Take(request.ItemByPage)
+                .Select(su => new ShortUrlInfo
+                {
+                    ShortCode = su.ShortCode,
+                    LongUrl = su.LongUrl,
+                    IsActive = su.IsActive,
+                    TotalClicks = su.TotalClicks,
+                    UniqueClicks = su.UniqueClicks,
+                    ExpireAt = su.ExpiresAt,
+                    CreatedAt = su.CreatedAt
+                })
+                .ToListAsync(ct);
+
+            return new ShortCodesResponse
+            {
+                Items = shortUrls,
+                Page = request.Page,
+                ItemsByPage = request.ItemByPage,
+                TotalItems = totalItems
+            };
+        }
+
+        private async Task SetCacheItem(ShortUrlEntity shortUrl, CancellationToken ct)
         {
             await cache.SetAsync<ShortUrlSearchItem>(CacheKey.ShortUrlKey(shortUrl.ShortCode),
                 new ShortUrlSearchItem(shortUrl.Id, shortUrl.LongUrl),

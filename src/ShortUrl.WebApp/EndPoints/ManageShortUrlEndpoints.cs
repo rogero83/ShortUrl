@@ -57,6 +57,18 @@ namespace ShortUrl.WebApp.EndPoints
                 return result.ToResponse();
             });
 
+            appGroup.MapPost("lists", async (ShortCodesRequest request,
+                IApiKeyContextAccessor apiKeyAccessor,
+                IShortUrlService svc, CancellationToken ct) =>
+            {
+                // Validate request
+                // TODO: Add validator if needed
+
+                var result = await svc.ListShortUrls(apiKeyAccessor.Current, request, ct);
+
+                return result.ToResponse();
+            });
+
             return app;
         }
     }

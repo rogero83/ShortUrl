@@ -12,7 +12,7 @@ public class QrCodeTest(StartupFixture fixture)
         var createRequest = new CreateShortUrlRequest($"https://www.example.com/some/long/url/{Guid.NewGuid()}");
         using var createResponse = await fixture.ClientShortUrlApp(StartupFixture.ApiKeyLocal)
             .PostAsJsonAsync("/api/v1/create", createRequest, fixture.CancellationToken);
-        
+
         Assert.Equal(HttpStatusCode.OK, createResponse.StatusCode);
         var shortUrl = await createResponse.Content.ReadFromJsonAsync<CreateShortUrlResponse>(fixture.CancellationToken);
         Assert.NotNull(shortUrl);

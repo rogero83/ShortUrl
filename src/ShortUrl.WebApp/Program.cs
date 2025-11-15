@@ -1,4 +1,6 @@
 using Microsoft.OpenApi.Models;
+using ShortUrl.DbPersistence;
+using ShortUrl.Entities;
 using ShortUrl.Infrastructure;
 using ShortUrl.WebApp.EndPoints;
 using ShortUrl.WebApp.Integrations;
@@ -13,14 +15,14 @@ builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo
     {
-        Title = "My Minimal API (.NET 9)",
+        Title = "My Short Url",
         Version = "v1",
-        Description = "Esempio API protetta da header X-APIKEY"
+        Description = "Simple project for a URL shortening"
     });
 
     c.AddSecurityDefinition("ApiKey", new OpenApiSecurityScheme
     {
-        Description = "Inserisci la tua chiave API nel campo X-APIKEY",
+        Description = "Insert your X-APIKEY",
         Type = SecuritySchemeType.ApiKey,
         Name = "X-APIKEY",
         In = ParameterLocation.Header,
@@ -67,5 +69,54 @@ app.MapGet("/", () => "Simple ShortUrl Project")
 app.MapShortUrlEndpoints()
     .MapManageShortUrlEndpoints()
     .MapQrCodeEndpoints();
+
+#region initData for Development
+if (!app.Environment.IsProduction())
+{
+    using var scope = app.Services.CreateScope();
+    var services = scope.ServiceProvider;
+    try
+    {
+        var dbContext = services.GetRequiredService<ShortUrlContext>();
+
+        var apiKeySeed = "api-key-local";
+        var apiKeySeedCustomUrl = "api-key-local-custom-url";
+
+        if (!dbContext.ApiKeys.Any(a => a.ApiKey == apiKeySeed))
+        {
+            var apiKeyentity = new ApiKeyEntity
+            {
+                ApiKey = apiKeySeed,
+                Email = "test@test.com",
+                Name = "test",
+                IsActive = true,
+                CanSetCustomShortCodes = false
+            };
+            dbContext.ApiKeys.Add(apiKeyentity);
+        }
+
+        if (!dbContext.ApiKeys.Any(a => a.ApiKey == apiKeySeedCustomUrl))
+        {
+            var apiKeyentityCustomUrl = new ApiKeyEntity
+            {
+                ApiKey = apiKeySeedCustomUrl,
+                Email = "testcustom@test.com",
+                Name = "testCustomUrl",
+                IsActive = true,
+                CanSetCustomShortCodes = true
+            };
+            dbContext.ApiKeys.Add(apiKeyentityCustomUrl);
+        }
+
+        await dbContext.SaveChangesAsync();
+
+    }
+    catch (Exception ex)
+    {
+        var logger = services.GetRequiredService<ILogger<Program>>();
+        logger.LogError(ex, "Errore durante il seed del database");
+    }
+}
+#endregion initData for Development
 
 await app.RunAsync();
