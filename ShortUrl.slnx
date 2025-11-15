@@ -14,6 +14,9 @@
     <Project Path="src/ShortUrl.DevSupport/ShortUrl.DevSupport.csproj" />
     <Project Path="src/ShortUrl.WebApp/ShortUrl.WebApp.csproj" />
   </Folder>
+  <Folder Name="/Solution Items/">
+    <File Path=".editorconfig" />
+  </Folder>
   <Folder Name="/Test/">
     <Project Path="test/ShortUrl.Aspire.Test/ShortUrl.Aspire.Test.csproj" Id="c2eadeca-2372-4b36-b0f0-357b44415dcc" />
   </Folder>

@@ -17,7 +17,7 @@ namespace ShortUrl.Aspire.Test.Fixture
 
         public async ValueTask InitializeAsync()
         {
-            var appHost = await DistributedApplicationTestingBuilder.CreateAsync<Projects.ShortUrl_AppHost>(CancellationToken);
+            var appHost = await DistributedApplicationTestingBuilder.CreateAsync<Projects.ShortUrl_AppHost>(["test"], CancellationToken);
             appHost.Services.AddLogging(logging =>
             {
                 logging.SetMinimumLevel(LogLevel.Debug);

@@ -1,4 +1,6 @@
 using Microsoft.OpenApi.Models;
+using ShortUrl.DbPersistence;
+using ShortUrl.Entities;
 using ShortUrl.Infrastructure;
 using ShortUrl.WebApp.EndPoints;
 using ShortUrl.WebApp.Integrations;
@@ -67,5 +69,54 @@ app.MapGet("/", () => "Simple ShortUrl Project")
 app.MapShortUrlEndpoints()
     .MapManageShortUrlEndpoints()
     .MapQrCodeEndpoints();
+
+#region initData for Development
+if (!app.Environment.IsProduction())
+{
+    using var scope = app.Services.CreateScope();
+    var services = scope.ServiceProvider;
+    try
+    {
+        var dbContext = services.GetRequiredService<ShortUrlContext>();
+
+        var apiKeySeed = "api-key-local";
+        var apiKeySeedCustomUrl = "api-key-local-custom-url";
+
+        if (!dbContext.ApiKeys.Any(a => a.ApiKey == apiKeySeed))
+        {
+            var apiKeyentity = new ApiKeyEntity
+            {
+                ApiKey = apiKeySeed,
+                Email = "test@test.com",
+                Name = "test",
+                IsActive = true,
+                CanSetCustomShortCodes = false
+            };
+            dbContext.ApiKeys.Add(apiKeyentity);
+        }
+
+        if (!dbContext.ApiKeys.Any(a => a.ApiKey == apiKeySeedCustomUrl))
+        {
+            var apiKeyentityCustomUrl = new ApiKeyEntity
+            {
+                ApiKey = apiKeySeedCustomUrl,
+                Email = "testcustom@test.com",
+                Name = "testCustomUrl",
+                IsActive = true,
+                CanSetCustomShortCodes = true
+            };
+            dbContext.ApiKeys.Add(apiKeyentityCustomUrl);
+        }
+
+        await dbContext.SaveChangesAsync();
+
+    }
+    catch (Exception ex)
+    {
+        var logger = services.GetRequiredService<ILogger<Program>>();
+        logger.LogError(ex, "Errore durante il seed del database");
+    }
+}
+#endregion initData for Development
 
 await app.RunAsync();
