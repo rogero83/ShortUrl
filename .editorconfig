@@ -1,0 +1,4 @@
+﻿[*.cs]
+
+# ASPIREINTERACTION001: Type viene usato solo a scopo di valutazione e potrebbe essere modificato o rimosso in aggiornamenti futuri. Elimina questa diagnostica per continuare.
+dotnet_diagnostic.ASPIREINTERACTION001.severity = suggestion
