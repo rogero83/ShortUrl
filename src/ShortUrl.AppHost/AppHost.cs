@@ -5,7 +5,8 @@ var builder = DistributedApplication.CreateBuilder(args);
 
 var isTest = args.Length > 0 && args.Contains("test");
 
-var pgsql = builder.AddPostgres("pgsql");
+var pgsql = builder.AddPostgres("pgsql")
+        .WithHostPort(15432);
 if (!isTest)
 {
     pgsql.WithDataVolume("short-url-mydb")
@@ -15,7 +16,8 @@ if (!isTest)
 var db = pgsql.AddDatabase("short-url-db");
 db.WithRestoreDbCommand();
 
-var redis = builder.AddRedis("redis");
+var redis = builder.AddRedis("redis")
+    .WithHostPort(16379);
 if (!isTest)
 {
     redis.WithClearCommand()
