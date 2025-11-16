@@ -23,8 +23,8 @@ jobs:
     - name: Dotnet info
       run: dotnet --info
     - name: Restore dependencies
-      run: dotnet restore
+      run: dotnet restore ShortUrl.slnx
     - name: Build
-      run: dotnet build --no-restore
+      run: dotnet build ShortUrl.slnx --no-restore
     - name: Test
-      run: dotnet test --no-build --verbosity diag
+      run: dotnet test ShortUrl.slnx --no-build --verbosity detailed

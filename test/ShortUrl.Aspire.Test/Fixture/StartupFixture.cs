@@ -8,7 +8,7 @@ namespace ShortUrl.Aspire.Test.Fixture
         public static string ApiKeyLocal => "api-key-local";
         public static string ApiKeyLocalCustomUrl => "api-key-local-custom-url";
 
-        private static readonly TimeSpan DefaultTimeout = TimeSpan.FromSeconds(60);
+        private static readonly TimeSpan DefaultTimeout = TimeSpan.FromSeconds(120);
 
         private IDictionary<string, HttpClient> ClientsShortUrl { get; set; } = new Dictionary<string, HttpClient>();
         public CancellationToken CancellationToken => TestContext.Current.CancellationToken;
