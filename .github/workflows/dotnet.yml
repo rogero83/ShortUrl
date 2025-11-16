@@ -20,6 +20,10 @@ jobs:
       uses: actions/setup-dotnet@v4
       with:
         dotnet-version: 10.0.x
+    - name: Install EF Tools
+      run: dotnet tool install --global dotnet-ef
+    - name: Add EF Tools to PATH
+      run: echo "$HOME/.dotnet/tools" >> $GITHUB_PATH
     - name: Dotnet info
       run: dotnet --info
     - name: Restore dependencies
