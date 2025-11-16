@@ -27,4 +27,4 @@ jobs:
     - name: Build
       run: dotnet build ShortUrl.slnx --no-restore
     - name: Test
-      run: dotnet test ShortUrl.slnx --no-build --verbosity detailed
+      run: dotnet test --solution ShortUrl.slnx --no-build --verbosity detailed
