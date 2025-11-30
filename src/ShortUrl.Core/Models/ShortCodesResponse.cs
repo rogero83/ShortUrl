@@ -1,5 +1,8 @@
 ﻿namespace ShortUrl.Core.Models;
 
+/// <summary>
+/// Represents a paginated response containing a collection of short URL information and pagination details.
+/// </summary>
 public class ShortCodesResponse
 {
     public int TotalItems { get; set; }

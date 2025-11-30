@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging;
 using ShortUrl.Common;
 using ShortUrl.Common.ResultPattern;
 using ShortUrl.Core.Contracts;
+using ShortUrl.Core.Enums;
 using ShortUrl.Core.Models;
 using ShortUrl.DbPersistence;
 using ShortUrl.Entities;
