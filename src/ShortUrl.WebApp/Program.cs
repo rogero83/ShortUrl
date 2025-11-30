@@ -1,4 +1,5 @@
-using Microsoft.OpenApi.Models;
+using Microsoft.OpenApi;
+using Scalar.AspNetCore;
 using ShortUrl.DbPersistence;
 using ShortUrl.Entities;
 using ShortUrl.Infrastructure;
@@ -11,25 +12,14 @@ var builder = WebApplication.CreateBuilder(args);
 builder.AddServiceDefaults();
 
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen(c =>
+builder.Services.AddOpenApi("v1", options =>
 {
-    c.SwaggerDoc("v1", new OpenApiInfo
-    {
-        Title = "My Short Url",
-        Version = "v1",
-        Description = "Simple project for a URL shortening"
-    });
+    // Specify the OpenAPI version to use
+    options.OpenApiVersion = OpenApiSpecVersion.OpenApi3_1;
 
-    c.AddSecurityDefinition("ApiKey", new OpenApiSecurityScheme
-    {
-        Description = "Insert your X-APIKEY",
-        Type = SecuritySchemeType.ApiKey,
-        Name = "X-APIKEY",
-        In = ParameterLocation.Header,
-        Scheme = "ApiKeyScheme"
-    });
+    options.AddDocumentTransformer<DocumentTransformer>();
 
-    c.OperationFilter<ApiKeyOperationFilter>();
+    options.AddOperationTransformer<OperationTransformer>();
 });
 
 builder.AddInfrastructureService();
@@ -50,11 +40,15 @@ builder.Services.AddRateLimiter(options =>
 
 var app = builder.Build();
 
-// ScalaApi integration, only in Development environment
 if (app.Environment.IsDevelopment())
 {
-    app.UseSwagger();
-    app.UseSwaggerUI();
+    app.MapOpenApi();
+
+    app.UseSwaggerUI(options =>
+    {
+        options.SwaggerEndpoint("/openapi/v1.json", "v1");
+    });
+    app.MapScalarApiReference();
 }
 
 app.UseRateLimiter();
