@@ -43,6 +43,13 @@ var app = builder.AddProject<Projects.ShortUrl_WebApp>("shorturl-webapp")
             DisplayText = "Swagger Doc",
             Endpoint = context.GetEndpoint("https")
         });
+
+        context.Urls.Add(new ResourceUrlAnnotation
+        {
+            Url = "/scalar",
+            DisplayText = "Scalar Doc",
+            Endpoint = context.GetEndpoint("https")
+        });
     })
     ;
 

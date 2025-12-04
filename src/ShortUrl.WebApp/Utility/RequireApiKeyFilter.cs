@@ -1,6 +1,6 @@
 ﻿using ShortUrl.Infrastructure.ApiKeyManager;
 
-namespace ShortUrl.WebApp
+namespace ShortUrl.WebApp.Utility
 {
     public class RequireApiKeyFilter(ILogger<RequireApiKeyFilter> logger,
         IApiKeyValidator validator,
