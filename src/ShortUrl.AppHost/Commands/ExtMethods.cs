@@ -40,7 +40,7 @@ namespace ShortUrl.AppHost.Commands
 
                 var efmigrate = builder.AddExecutable($"ef-migrate-{app.Resource.Name}",
                         "dotnet", projectDirectory)
-                    .WithArgs("ef", "database", "update", "--no-build",
+                    .WithArgs("ef", "database", "update",
                     "--project", "..\\ShortUrl.DbPersistence",
                     "--startup-project", "..\\ShortUrl.DevSupport",
                     "--connection", database.Resource)
