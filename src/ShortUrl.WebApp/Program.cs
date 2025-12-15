@@ -78,28 +78,32 @@ if (!app.Environment.IsProduction())
 
         if (!dbContext.ApiKeys.Any(a => a.ApiKey == apiKeySeed))
         {
-            var apiKeyentity = new ApiKeyEntity
-            {
-                ApiKey = apiKeySeed,
-                Email = "test@test.com",
-                Name = "test",
-                IsActive = true,
-                CanSetCustomShortCodes = false
-            };
-            dbContext.ApiKeys.Add(apiKeyentity);
+            var apiKeyEntity = ApiKeyEntity.Create(
+                apiKeySeed,
+                "test@test.com",
+                "test",
+                true,
+                false);
+
+            if (apiKeyEntity.IsFailure)
+                throw new Exception(apiKeyEntity.Error.ToString());
+
+            dbContext.ApiKeys.Add(apiKeyEntity.Value);
         }
 
         if (!dbContext.ApiKeys.Any(a => a.ApiKey == apiKeySeedCustomUrl))
         {
-            var apiKeyentityCustomUrl = new ApiKeyEntity
-            {
-                ApiKey = apiKeySeedCustomUrl,
-                Email = "testcustom@test.com",
-                Name = "testCustomUrl",
-                IsActive = true,
-                CanSetCustomShortCodes = true
-            };
-            dbContext.ApiKeys.Add(apiKeyentityCustomUrl);
+            var apiKeyentityCustomUrl = ApiKeyEntity.Create(
+                apiKeySeedCustomUrl,
+                "testcustom@test.com",
+                "testCustomUrl",
+                true,
+                true);
+
+            if (apiKeyentityCustomUrl.IsFailure)
+                throw new Exception(apiKeyentityCustomUrl.Error.ToString());
+
+            dbContext.ApiKeys.Add(apiKeyentityCustomUrl.Value);
         }
 
         await dbContext.SaveChangesAsync();
