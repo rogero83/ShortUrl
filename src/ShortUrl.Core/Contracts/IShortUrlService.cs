@@ -1,8 +1,11 @@
-﻿using ShortUrl.Common.ResultPattern;
+﻿using ShortUrl.Common;
 using ShortUrl.Core.Models;
 
 namespace ShortUrl.Core.Contracts;
 
+/// <summary>
+/// ShortUrl Service
+/// </summary>
 public interface IShortUrlService
 {
     /// <summary>

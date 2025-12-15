@@ -1,7 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using ShortUrl.Common;
-using ShortUrl.Common.ResultPattern;
 using ShortUrl.Core.Contracts;
 using ShortUrl.Core.Enums;
 using ShortUrl.Core.Models;
@@ -18,7 +17,9 @@ namespace ShortUrl.Infrastructure.Implementation
     {
         private const int MaxStep = 5;
 
-        public async Task<Result<CreateShortUrlResponse>> CreateShortUrl(ApiKeyContext apiKeyContext, CreateShortUrlRequest request, CancellationToken ct)
+        public async Task<Result<CreateShortUrlResponse>> CreateShortUrl(ApiKeyContext apiKeyContext,
+            CreateShortUrlRequest request,
+            CancellationToken ct)
         {
             var step = 0;
             do
@@ -26,17 +27,19 @@ namespace ShortUrl.Infrastructure.Implementation
                 var shortCode = request.ShortCode ?? ShortUrlGenerator.GenerateShortCode();
                 if (!await dbContext.ShortUrls.AnyAsync(su => su.ShortCode == shortCode, ct))
                 {
-                    var shortUrl = new ShortUrlEntity
-                    {
-                        ShortCode = shortCode,
-                        OwnerId = apiKeyContext.Id,
-                        LongUrl = request.OriginalUrl,
-                        ExpiresAt = request.Expire,
-                        IsActive = true
-                    };
-                    await dbContext.ShortUrls.AddAsync(shortUrl, ct);
+                    var shortUrl = ShortUrlEntity.Create(
+                        shortCode,
+                        apiKeyContext.Id,
+                        request.OriginalUrl,
+                        request.Expire,
+                        request.Activate);
+
+                    if (shortUrl.IsFailure)
+                        return shortUrl.Error;
+
+                    await dbContext.ShortUrls.AddAsync(shortUrl.Value, ct);
                     await dbContext.SaveChangesAsync(ct);
-                    await SetCacheItem(shortUrl, ct);
+                    await SetCacheItem(shortUrl.Value, ct);
 
                     logger.LogInformation("Created ShortUrl: {ShortCode} for ApiKeyId: {ApiKeyId}", shortCode, apiKeyContext.Id);
 
@@ -60,37 +63,28 @@ namespace ShortUrl.Infrastructure.Implementation
                 return Error.Validation("The provided short URL code is not valid.");
             }
 
-            if (string.IsNullOrEmpty(request.OriginalUrl)
-                || !Uri.IsWellFormedUriString(request.OriginalUrl, UriKind.Absolute))
-            {
-                logger.LogWarning("Invalid URL format provided by ApiKeyId: {ApiKeyId}, URL: {Url}", apiKeyContext.Id, request.OriginalUrl);
-                return Error.Validation("The provided long URL is not valid.");
-            }
-
-            if (request.Expire.HasValue && request.Expire.Value <= DateTime.UtcNow)
-            {
-                logger.LogWarning("Expiration date is in the past for ApiKeyId: {ApiKeyId}, Expire: {Expire}", apiKeyContext.Id, request.Expire);
-                return Error.Validation("The expiration date must be in the future.");
-            }
-
             // Retrieve existing ShortUrl
-            var shortUrl = await dbContext.ShortUrls
+            var shortUrlEntity = await dbContext.ShortUrls
                 .FirstOrDefaultAsync(su => su.ShortCode == shortCode && su.OwnerId == apiKeyContext.Id, ct);
-            if (shortUrl == null)
+            if (shortUrlEntity == null)
             {
                 logger.LogWarning("ShortUrl not found for editing by ApiKeyId: {ApiKeyId}, ShortCode: {ShortCode}", apiKeyContext.Id, shortCode);
                 return Error.NotFound("The specified short URL was not found.");
             }
 
             // Update fields
-            shortUrl.LongUrl = request.OriginalUrl;
-            shortUrl.IsActive = request.IsActive;
-            shortUrl.ExpiresAt = request.Expire;
+            var editAction = shortUrlEntity.Edit(request.OriginalUrl,
+                request.Expire,
+                request.IsActive);
+
+            if (editAction.IsFailure)
+                return editAction.Error;
+
             await dbContext.SaveChangesAsync(ct);
 
-            await SetCacheItem(shortUrl, ct);
+            await SetCacheItem(shortUrlEntity, ct);
 
-            return new EditShortUrlResponse(shortUrl.ShortCode);
+            return new EditShortUrlResponse(shortUrlEntity.ShortCode);
         }
 
         public async Task<Result<ShortCodesResponse>> ListShortUrls(ApiKeyContext current, ShortCodesRequest request, CancellationToken ct)

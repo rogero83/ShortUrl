@@ -1,4 +1,4 @@
-﻿using ShortUrl.Common.ResultPattern;
+﻿using ShortUrl.Common;
 
 namespace ShortUrl.WebApp.Utility
 {

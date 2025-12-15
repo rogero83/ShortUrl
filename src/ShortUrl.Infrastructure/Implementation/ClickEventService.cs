@@ -14,15 +14,14 @@ namespace ShortUrl.Infrastructure.Implementation
         {
             try
             {
-                var entity = new ClickEventEntity
-                {
-                    ShortUrlId = message.ShortUrlId,
-                    IpAddress = message.IpAddress,
-                    UserAgent = message.UserAgent,
-                    Referrer = message.Referrer,
-                    ClickedAt = message.ClickedAt
-                };
-                await context.ClickEvents.AddAsync(entity, stoppingToken);
+                var entity = ClickEventEntity.Create(
+                    message.ShortUrlId,
+                    message.IpAddress,
+                    message.UserAgent,
+                    message.Referrer,
+                    message.ClickedAt);
+
+                await context.ClickEvents.AddAsync(entity.Value, stoppingToken);
                 await context.SaveChangesAsync(stoppingToken);
             }
             catch (Exception ex)

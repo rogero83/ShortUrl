@@ -1,7 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using ShortUrl.Common;
-using ShortUrl.Common.ResultPattern;
 using ShortUrl.Core.Contracts;
 using ShortUrl.Core.Models;
 using ShortUrl.DbPersistence;
